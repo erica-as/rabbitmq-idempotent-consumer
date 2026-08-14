@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Processador.Worker/Processador.Worker.csproj" />
+    <Project Path="src/Shared/Shared.csproj" />
+    <Project Path="src/Solicitante.Api/Solicitante.Api.csproj" />
+  </Folder>
+</Solution>
