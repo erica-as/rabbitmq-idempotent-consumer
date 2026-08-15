@@ -79,4 +79,4 @@ public sealed class RabbitMqPublisher : IPedidoPublisher, IDisposable
         _connection.Dispose();
     }
 }
- 
+
