@@ -12,10 +12,15 @@ var rabbitMq = builder.Configuration
 rabbitMq.Validar();
 
 builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton(rabbitMq);
 builder.Services.AddSingleton<IPedidoPublisher, RabbitMqPublisher>();
 
 var app = builder.Build();
+
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.MapControllers();
 

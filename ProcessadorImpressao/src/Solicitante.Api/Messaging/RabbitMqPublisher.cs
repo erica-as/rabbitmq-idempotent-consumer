@@ -17,8 +17,9 @@ public sealed class RabbitMqPublisher : IPedidoPublisher, IDisposable
 {
     private readonly IConnection _connection;
     private readonly IModel _channel;
+    private readonly ILogger<RabbitMqPublisher> _logger;
  
-    public RabbitMqPublisher(RabbitMqOptions options)
+    public RabbitMqPublisher(RabbitMqOptions options, ILogger<RabbitMqPublisher> logger)
     {
         var factory = new ConnectionFactory
         {
@@ -29,7 +30,9 @@ public sealed class RabbitMqPublisher : IPedidoPublisher, IDisposable
  
         _connection = factory.CreateConnection();
         _channel = _connection.CreateModel();
+        _logger = logger;
  
+        _logger.LogInformation("Conectado ao RabbitMQ em {HostName}.", options.HostName);
         DeclararTopologia();
     }
  
@@ -58,14 +61,17 @@ public sealed class RabbitMqPublisher : IPedidoPublisher, IDisposable
             arguments: argumentosFilaPrincipal);
     }
  
-    public void Publicar(PedidoImpressao pedido)
+public void Publicar(PedidoImpressao pedido)
     {
         var json = JsonSerializer.Serialize(pedido);
         var body = Encoding.UTF8.GetBytes(json);
- 
+
         var properties = _channel.CreateBasicProperties();
         properties.Persistent = true; // sobrevive a restart do broker
- 
+
+        _logger.LogInformation(
+            "Publicando pedido {PedidoId} na fila {Fila}.", pedido.PedidoId, QueueNames.ImpressaoSolicitada);
+
         _channel.BasicPublish(
             exchange: string.Empty,
             routingKey: QueueNames.ImpressaoSolicitada,

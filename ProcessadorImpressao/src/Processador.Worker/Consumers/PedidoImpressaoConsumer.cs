@@ -45,6 +45,9 @@ public sealed class PedidoImpressaoConsumer
             queue: QueueNames.ImpressaoSolicitada,
             autoAck: false, // ack manual: só confirma depois de processar com sucesso
             consumer: consumer);
+
+        _logger.LogInformation(
+            "Consumo iniciado na fila {Fila} (autoAck desativado).", QueueNames.ImpressaoSolicitada);
     }
 
     /// <summary>
@@ -74,12 +77,19 @@ public sealed class PedidoImpressaoConsumer
             exclusive: false,
             autoDelete: false,
             arguments: argumentosFilaPrincipal);
+
+        _logger.LogInformation(
+            "Topologia declarada: fila {Fila}, DLQ {Dlq} e exchange dlx.",
+            QueueNames.ImpressaoSolicitada, QueueNames.ImpressaoSolicitadaDlq);
     }
 
     private async Task ProcessarMensagemAsync(BasicDeliverEventArgs evento)
     {
         var json = Encoding.UTF8.GetString(evento.Body.ToArray());
         var pedido = JsonSerializer.Deserialize<PedidoImpressao>(json);
+
+        _logger.LogInformation(
+            "Mensagem recebida (deliveryTag {DeliveryTag}).", evento.DeliveryTag);
 
         if (pedido is null)
         {
@@ -141,6 +151,10 @@ public sealed class PedidoImpressaoConsumer
         properties.Persistent = true;
         properties.Headers = new Dictionary<string, object> { { "x-retry-count", tentativas } };
 
+        _logger.LogWarning(
+            "Republicando mensagem na fila {Fila} (x-retry-count = {Tentativas}/{MaxTentativas}).",
+            QueueNames.ImpressaoSolicitada, tentativas, MaxTentativas);
+
         _channel.BasicPublish(
             exchange: string.Empty,
             routingKey: QueueNames.ImpressaoSolicitada,
@@ -152,6 +166,8 @@ public sealed class PedidoImpressaoConsumer
     {
         var properties = _channel.CreateBasicProperties();
         properties.Persistent = true;
+
+        _logger.LogWarning("Publicando mensagem na DLQ {Dlq}.", QueueNames.ImpressaoSolicitadaDlq);
 
         _channel.BasicPublish(
             exchange: string.Empty,
