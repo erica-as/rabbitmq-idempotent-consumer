@@ -24,4 +24,8 @@ app.UseSwaggerUI();
 
 app.MapControllers();
 
+// Fail-fast: força a criação da conexão com o broker já no startup, para a
+// API não subir e só descobrir o RabbitMQ fora no primeiro POST /pedidos.
+app.Services.GetRequiredService<IPedidoPublisher>();
+
 app.Run();

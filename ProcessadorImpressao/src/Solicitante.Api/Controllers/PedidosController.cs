@@ -1,31 +1,25 @@
 using Microsoft.AspNetCore.Mvc;
 using Shared.Messages;
+using Solicitante.Api.DTOs;
 using Solicitante.Api.Messaging.Interface;
- 
+
 namespace Solicitante.Api.Controllers;
- 
+
 [ApiController]
 [Route("pedidos")]
 public class PedidosController : ControllerBase
 {
     private readonly IPedidoPublisher _publisher;
     private readonly ILogger<PedidosController> _logger;
- 
+
     public PedidosController(IPedidoPublisher publisher, ILogger<PedidosController> logger)
     {
         _publisher = publisher;
         _logger = logger;
     }
- 
-    public record CriarPedidoRequest(string NomeArquivo, int Copias, Guid? PedidoId = null);
- 
-    /// <summary>
-    /// Cria e publica um pedido de impressão. PedidoId é opcional: se não for
-    /// informado, um novo é gerado. Para testar idempotência manualmente,
-    /// envie o mesmo PedidoId em duas requisições seguidas.
-    /// </summary>
+
     [HttpPost]
-    public IActionResult Criar([FromBody] CriarPedidoRequest request)
+    public async Task<IActionResult> Criar([FromBody] CriarPedidoRequest request)
     {
         var pedido = new PedidoImpressao(
             PedidoId: request.PedidoId ?? Guid.NewGuid(),
@@ -38,7 +32,7 @@ public class PedidosController : ControllerBase
 
         try
         {
-            _publisher.Publicar(pedido);
+            await _publisher.PublicarAsync(pedido);
         }
         catch (Exception ex)
         {
@@ -46,7 +40,7 @@ public class PedidosController : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError,
                 new { erro = "Falha ao publicar o pedido na fila." });
         }
- 
-        return Accepted(new { pedido.PedidoId });
+
+        return Accepted(new CriarPedidoResponse(pedido.PedidoId));
     }
 }

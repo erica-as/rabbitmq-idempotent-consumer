@@ -15,14 +15,14 @@ public sealed class InMemoryProcessedMessageStore : IProcessedMessageStore
 {
     private readonly ConcurrentDictionary<Guid, byte> _processados = new();
 
-    public Task<bool> JaProcessadoAsync(Guid pedidoId)
+    public Task<bool> TentarMarcarComoProcessadoAsync(Guid pedidoId)
     {
-        return Task.FromResult(_processados.ContainsKey(pedidoId));
+        return Task.FromResult(_processados.TryAdd(pedidoId, 0));
     }
 
-    public Task MarcarComoProcessadoAsync(Guid pedidoId)
+    public Task LiberarMarcacaoAsync(Guid pedidoId)
     {
-        _processados.TryAdd(pedidoId, 0);
+        _processados.TryRemove(pedidoId, out _);
         return Task.CompletedTask;
     }
 }
