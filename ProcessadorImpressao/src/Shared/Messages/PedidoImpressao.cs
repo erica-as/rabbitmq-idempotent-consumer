@@ -1,3 +1,7 @@
 namespace Shared.Messages;
 
-public record PedidoImpressao();
+public record PedidoImpressao(
+    Guid PedidoId,
+    string NomeArquivo,
+    int Copias
+);
